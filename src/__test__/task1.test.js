@@ -1,10 +1,12 @@
-import { app, server, users, articles } from '../server.mjs'
+import { app, server } from '../server.mjs'
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import request from 'supertest'
 
 // Змінні для зберігання тестових ID
 let testUserId
 let testArticleId
+let testUserName
+let testArticleTitle
 const NON_EXISTENT_ID = 'non-existent-id'
 
 describe('Express REST API', () => {
@@ -13,33 +15,27 @@ describe('Express REST API', () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    // Отримуємо існуючі дані з Maps
-    // Якщо є дані, використовуємо перший доступний ID
-    if (users.size > 0) {
-      testUserId = Array.from(users.keys())[0]
+    // Отримуємо існуючі дані через API
+    const usersResp = await request(app).get('/users')
+    if (usersResp.body.length > 0) {
+      testUserId = usersResp.body[0].id
+      testUserName = usersResp.body[0].name
     } else {
-      // Якщо даних немає, створюємо тестового користувача
-      const newUserResponse = await request(app).post('/users').send({ name: 'Test User For ID' })
-
-      // В реальному API треба було б отримати ID з відповіді,
-      // але у нашому випадку просто використовуємо поточний час
-      testUserId = Date.now().toString()
-      users.set(testUserId, { name: 'Test User For ID' })
+      const newUserResp = await request(app).post('/users').send({ name: 'Test User For ID' })
+      testUserId = newUserResp.body.id
+      testUserName = newUserResp.body.name
     }
 
-    // Аналогічно для статтей
-    if (articles.size > 0) {
-      testArticleId = Array.from(articles.keys())[0]
+    // Аналогічно для статей
+    const articlesResp = await request(app).get('/articles')
+    if (articlesResp.body.length > 0) {
+      testArticleId = articlesResp.body[0].id
+      testArticleTitle = articlesResp.body[0].title
     } else {
-      // Якщо даних немає, створюємо тестову статтю
-      const newArticleResponse = await request(app).post('/articles').send({ title: 'Test Article For ID' })
-
-      testArticleId = Date.now().toString()
-      articles.set(testArticleId, { title: 'Test Article For ID' })
+      const newArticleResp = await request(app).post('/articles').send({ title: 'Test Article For ID' })
+      testArticleId = newArticleResp.body.id
+      testArticleTitle = newArticleResp.body.title
     }
-
-    console.log(`Using test user ID: ${testUserId}`)
-    console.log(`Using test article ID: ${testArticleId}`)
   })
 
   afterAll(() => {
@@ -81,10 +77,10 @@ describe('Express REST API', () => {
       expect(response.status).toBe(201)
       expect(response.body).toHaveProperty('id')
       expect(response.body).toHaveProperty('name', testName)
-      // Перевіряємо, що користувач був створений в Map
-      const newUser = users.get(response.body.id)
-      expect(newUser).toBeDefined()
-      expect(newUser.name).toBe(testName)
+      // Перевіряємо через GET /users/:id
+      const getResp = await request(app).get(`/users/${response.body.id}`)
+      expect(getResp.status).toBe(200)
+      expect(getResp.body).toEqual({ id: response.body.id, name: testName })
     })
 
     test('POST /users повинен повертати статус 400 при некоректних даних', async () => {
@@ -105,7 +101,7 @@ describe('Express REST API', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         id: testUserId,
-        name: users.get(testUserId).name
+        name: testUserName
       })
     })
 
@@ -126,10 +122,10 @@ describe('Express REST API', () => {
         name: newName
       })
 
-      // Перевіряємо, що дані користувача дійсно оновилися
-      const user = users.get(testUserId)
-      expect(user).toBeDefined()
-      expect(user.name).toBe(newName)
+      // Перевіряємо через GET /users/:userId, що дані оновилися
+      const getResp = await request(app).get(`/users/${testUserId}`)
+      expect(getResp.status).toBe(200)
+      expect(getResp.body).toEqual({ id: testUserId, name: newName })
     })
 
     test('PUT /users/:userId повинен повертати статус 400 при некоректних даних', async () => {
@@ -152,17 +148,18 @@ describe('Express REST API', () => {
     })
 
     test('DELETE /users/:userId повинен повертати статус 204 без вмісту та видаляти користувача', async () => {
-      // Створюємо тимчасового користувача для видалення
-      const tempUserId = 'temp-' + Date.now()
-      users.set(tempUserId, { name: 'Temporary User' })
+      // Створюємо тимчасового користувача для видалення через API
+      const createResp = await request(app).post('/users').send({ name: 'Temporary User' })
+      const tempUserId = createResp.body.id
 
-      const response = await request(app).delete(`/users/${tempUserId}`)
+      const deleteResp = await request(app).delete(`/users/${tempUserId}`)
+      expect(deleteResp.status).toBe(204)
+      expect(deleteResp.text).toBe('')
 
-      expect(response.status).toBe(204)
-      expect(response.text).toBe('')
-
-      // Перевіряємо, що користувач справді видалений
-      expect(users.has(tempUserId)).toBe(false)
+      // Перевіряємо через GET /users/:id, що користувача видалено
+      const getAfter = await request(app).get(`/users/${tempUserId}`)
+      expect(getAfter.status).toBe(404)
+      expect(getAfter.text).toBe('Not Found')
     })
 
     test('DELETE /users/:userId повинен повертати статус 404 для неіснуючого користувача', async () => {
@@ -194,10 +191,10 @@ describe('Express REST API', () => {
       expect(response.status).toBe(201)
       expect(response.body).toHaveProperty('id')
       expect(response.body).toHaveProperty('title', testTitle)
-      // Перевіряємо, що стаття була створена в Map
-      const newArticle = articles.get(response.body.id)
-      expect(newArticle).toBeDefined()
-      expect(newArticle.title).toBe(testTitle)
+      // Перевіряємо через GET /articles/:id
+      const getResp = await request(app).get(`/articles/${response.body.id}`)
+      expect(getResp.status).toBe(200)
+      expect(getResp.body).toEqual({ id: response.body.id, title: testTitle })
     })
 
     test('POST /articles повинен повертати статус 400 при некоректних даних', async () => {
@@ -218,7 +215,7 @@ describe('Express REST API', () => {
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
         id: testArticleId,
-        title: articles.get(testArticleId).title
+        title: testArticleTitle
       })
     })
 
@@ -239,10 +236,10 @@ describe('Express REST API', () => {
         title: newTitle
       })
 
-      // Перевіряємо, що дані статті дійсно оновилися
-      const article = articles.get(testArticleId)
-      expect(article).toBeDefined()
-      expect(article.title).toBe(newTitle)
+      // Перевіряємо через GET /articles/:id, що дані оновилися
+      const getResp = await request(app).get(`/articles/${testArticleId}`)
+      expect(getResp.status).toBe(200)
+      expect(getResp.body).toEqual({ id: testArticleId, title: newTitle })
     })
 
     test('PUT /articles/:articleId повинен повертати статус 400 при некоректних даних', async () => {
@@ -265,17 +262,18 @@ describe('Express REST API', () => {
     })
 
     test('DELETE /articles/:articleId повинен повертати статус 204 без вмісту та видаляти статтю', async () => {
-      // Створюємо тимчасову статтю для видалення
-      const tempArticleId = 'temp-' + Date.now()
-      articles.set(tempArticleId, { title: 'Temporary Article' })
+      // Створюємо тимчасову статтю для видалення через API
+      const createResp = await request(app).post('/articles').send({ title: 'Temporary Article' })
+      const tempArticleId = createResp.body.id
 
-      const response = await request(app).delete(`/articles/${tempArticleId}`)
+      const deleteResp = await request(app).delete(`/articles/${tempArticleId}`)
+      expect(deleteResp.status).toBe(204)
+      expect(deleteResp.text).toBe('')
 
-      expect(response.status).toBe(204)
-      expect(response.text).toBe('')
-
-      // Перевіряємо, що стаття справді видалена
-      expect(articles.has(tempArticleId)).toBe(false)
+      // Перевіряємо через GET /articles/:id, що статтю видалено
+      const getAfter = await request(app).get(`/articles/${tempArticleId}`)
+      expect(getAfter.status).toBe(404)
+      expect(getAfter.text).toBe('Not Found')
     })
 
     test('DELETE /articles/:articleId повинен повертати статус 404 для неіснуючої статті', async () => {
