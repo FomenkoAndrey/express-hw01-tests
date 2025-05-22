@@ -135,10 +135,6 @@ app.delete('/articles/:articleId', (req, res) => {
   res.status(204).send()
 })
 
-// Додавання тестових даних для автоматичного тестування
-users.set('123', { name: 'Test User' })
-articles.set('456', { title: 'Test Article' })
-
 // Обробка помилок для неіснуючих маршрутів
 app.use((req, res) => {
   res.status(404).send('Not Found')
@@ -156,4 +152,4 @@ const server = app.listen(PORT, () => {
 })
 
 // Експорт для тестів
-export { server, app, users, articles }
+export { server, app }
