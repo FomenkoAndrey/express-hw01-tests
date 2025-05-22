@@ -24,33 +24,34 @@
 
 - **`/`**:
 
-  - `GET`: Повертає "Get root route".
+  - `GET`: Повертає текстовий рядок "Get root route".
 
 - **`/users`**:
 
-  - `GET`: Повертає "Get users route".
-  - `POST`: Повертає "Post users route".
+  - `GET`: Повертає JSON масив користувачів `[{ id, name }, ...]`.
+  - `POST`: Повертає JSON об'єкт `{ id, name }`.
 
 - **`/users/:userId`**:
 
-  - `GET`: Повертає "Get user by Id route: {userId}".
-  - `PUT`: Повертає "Put user by Id route: {userId}".
-  - `DELETE`: Повертає "Delete user by Id route: {userId}".
+  - `GET`: Повертає JSON об'єкт `{ id, name }` або статус 404, якщо користувача не знайдено.
+  - `PUT`: Повертає JSON об'єкт `{ id, name }` або статус 400/404 при помилці.
+  - `DELETE`: Повертає статус 204 No Content без тіла відповіді.
 
 - **`/articles`**:
 
-  - `GET`: Повертає "Get articles route".
-  - `POST`: Повертає "Post articles route".
+  - `GET`: Повертає JSON масив статей `[{ id, title }, ...]`.
+  - `POST`: Повертає JSON об'єкт `{ id, title }`.
 
 - **`/articles/:articleId`**:
-  - `GET`: Повертає "Get article by Id route: {articleId}".
-  - `PUT`: Повертає "Put article by Id route: {articleId}".
-  - `DELETE`: Повертає "Delete article by Id route: {articleId}".
+  - `GET`: Повертає JSON об'єкт `{ id, title }` або статус 404.
+  - `PUT`: Повертає JSON об'єкт `{ id, title }` або статус 400/404.
+  - `DELETE`: Повертає статус 204 No Content без тіла відповіді.
 
 ### 4. Відповіді сервера
 
 - Відповіді мають бути текстовими для спрощення інтеграції та відладки.
 - Встановлюйте наступні статус-коди для різних типів запитів:
+
   - **GET запити**:
     - `200 OK` — успішний запит на всі маршрути (`/`, `/users`, `/users/:userId`, `/articles`, `/articles/:articleId`)
     - `404 Not Found` — для запитів на неіснуючі ресурси (`/users/:userId`, `/articles/:articleId` з неіснуючими ID)
@@ -64,6 +65,8 @@
   - **DELETE запити**:
     - `204 No Content` — успішне видалення ресурсу (для `/users/:userId` та `/articles/:articleId`)
     - `404 Not Found` — ресурс не знайдено (для неіснуючих ID)
+
+- Відповіді повинні бути в форматі JSON для всіх маршрутів, крім кореневого `/`, який повертає текст.
 
 ### 5. Обробка помилок
 
@@ -106,10 +109,10 @@
   - Для тестування потрібно створити початкові тестові дані, подібні до:
 
   ```javascript
-  // Створення даних для тестування
-  // ID можуть бути будь-якими, але вони мають бути доступні для відповідних маршрутів
-  users.set('user-id-1', { name: "Будь-яке ім'я користувача" })
-  articles.set('article-id-1', { title: 'Будь-яка назва статті' })
+  // Створення початкових тестових даних
+  // Приклад: ID можуть бути будь-якими, головне — щоб був хоча б один запис
+  users.set('any-user-id', { name: "Будь-яке ім'я користувача" })
+  articles.set('any-article-id', { title: 'Будь-яка назва статті' })
   ```
 
 - **Тестування глобального обробника помилок (500)**:
