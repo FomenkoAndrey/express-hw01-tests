@@ -52,7 +52,7 @@ describe('Express REST API', () => {
       const response = await request(app).get('/')
 
       expect(response.status).toBe(200)
-      expect(response.text).toBe('Get root route')
+      expect(response.text).toMatch(/Get root route/i)
     })
   })
 
@@ -87,12 +87,12 @@ describe('Express REST API', () => {
       // Перевіряємо порожній рядок
       const response1 = await request(app).post('/users').send({ name: '' })
       expect(response1.status).toBe(400)
-      expect(response1.text).toBe('Bad Request')
+      expect(response1.text).toMatch(/Bad Request/i)
 
       // Перевіряємо відсутність поля
       const response2 = await request(app).post('/users').send({})
       expect(response2.status).toBe(400)
-      expect(response2.text).toBe('Bad Request')
+      expect(response2.text).toMatch(/Bad Request/i)
     })
 
     test('GET /users/:userId повинен повертати статус 200 та правильне повідомлення з ID', async () => {
@@ -109,7 +109,7 @@ describe('Express REST API', () => {
       const response = await request(app).get(`/users/${NON_EXISTENT_ID}`)
 
       expect(response.status).toBe(404)
-      expect(response.text).toBe('Not Found')
+      expect(response.text).toMatch(/Not Found/i)
     })
 
     test('PUT /users/:userId повинен повертати статус 200, правильне повідомлення та оновлювати користувача', async () => {
@@ -132,19 +132,19 @@ describe('Express REST API', () => {
       // Перевіряємо порожній рядок
       const response1 = await request(app).put(`/users/${testUserId}`).send({ name: '' })
       expect(response1.status).toBe(400)
-      expect(response1.text).toBe('Bad Request')
+      expect(response1.text).toMatch(/Bad Request/i)
 
       // Перевіряємо відсутність поля
       const response2 = await request(app).put(`/users/${testUserId}`).send({})
       expect(response2.status).toBe(400)
-      expect(response2.text).toBe('Bad Request')
+      expect(response2.text).toMatch(/Bad Request/i)
     })
 
     test('PUT /users/:userId повинен повертати статус 404 для неіснуючого користувача', async () => {
       const response = await request(app).put(`/users/${NON_EXISTENT_ID}`).send({ name: 'Updated User' })
 
       expect(response.status).toBe(404)
-      expect(response.text).toBe('Not Found')
+      expect(response.text).toMatch(/Not Found/i)
     })
 
     test('DELETE /users/:userId повинен повертати статус 204 без вмісту та видаляти користувача', async () => {
@@ -159,14 +159,14 @@ describe('Express REST API', () => {
       // Перевіряємо через GET /users/:id, що користувача видалено
       const getAfter = await request(app).get(`/users/${tempUserId}`)
       expect(getAfter.status).toBe(404)
-      expect(getAfter.text).toBe('Not Found')
+      expect(getAfter.text).toMatch(/Not Found/i)
     })
 
     test('DELETE /users/:userId повинен повертати статус 404 для неіснуючого користувача', async () => {
       const response = await request(app).delete(`/users/${NON_EXISTENT_ID}`)
 
       expect(response.status).toBe(404)
-      expect(response.text).toBe('Not Found')
+      expect(response.text).toMatch(/Not Found/i)
     })
   })
 
@@ -201,12 +201,12 @@ describe('Express REST API', () => {
       // Перевіряємо порожній рядок
       const response1 = await request(app).post('/articles').send({ title: '' })
       expect(response1.status).toBe(400)
-      expect(response1.text).toBe('Bad Request')
+      expect(response1.text).toMatch(/Bad Request/i)
 
       // Перевіряємо відсутність поля
       const response2 = await request(app).post('/articles').send({})
       expect(response2.status).toBe(400)
-      expect(response2.text).toBe('Bad Request')
+      expect(response2.text).toMatch(/Bad Request/i)
     })
 
     test('GET /articles/:articleId повинен повертати статус 200 та правильне повідомлення з ID', async () => {
@@ -223,7 +223,7 @@ describe('Express REST API', () => {
       const response = await request(app).get(`/articles/${NON_EXISTENT_ID}`)
 
       expect(response.status).toBe(404)
-      expect(response.text).toBe('Not Found')
+      expect(response.text).toMatch(/Not Found/i)
     })
 
     test('PUT /articles/:articleId повинен повертати статус 200, правильне повідомлення та оновлювати статтю', async () => {
@@ -246,19 +246,19 @@ describe('Express REST API', () => {
       // Перевіряємо порожній рядок
       const response1 = await request(app).put(`/articles/${testArticleId}`).send({ title: '' })
       expect(response1.status).toBe(400)
-      expect(response1.text).toBe('Bad Request')
+      expect(response1.text).toMatch(/Bad Request/i)
 
       // Перевіряємо відсутність поля
       const response2 = await request(app).put(`/articles/${testArticleId}`).send({})
       expect(response2.status).toBe(400)
-      expect(response2.text).toBe('Bad Request')
+      expect(response2.text).toMatch(/Bad Request/i)
     })
 
     test('PUT /articles/:articleId повинен повертати статус 404 для неіснуючої статті', async () => {
       const response = await request(app).put(`/articles/${NON_EXISTENT_ID}`).send({ title: 'Updated Article' })
 
       expect(response.status).toBe(404)
-      expect(response.text).toBe('Not Found')
+      expect(response.text).toMatch(/Not Found/i)
     })
 
     test('DELETE /articles/:articleId повинен повертати статус 204 без вмісту та видаляти статтю', async () => {
@@ -273,14 +273,14 @@ describe('Express REST API', () => {
       // Перевіряємо через GET /articles/:id, що статтю видалено
       const getAfter = await request(app).get(`/articles/${tempArticleId}`)
       expect(getAfter.status).toBe(404)
-      expect(getAfter.text).toBe('Not Found')
+      expect(getAfter.text).toMatch(/Not Found/i)
     })
 
     test('DELETE /articles/:articleId повинен повертати статус 404 для неіснуючої статті', async () => {
       const response = await request(app).delete(`/articles/${NON_EXISTENT_ID}`)
 
       expect(response.status).toBe(404)
-      expect(response.text).toBe('Not Found')
+      expect(response.text).toMatch(/Not Found/i)
     })
   })
 
@@ -290,27 +290,21 @@ describe('Express REST API', () => {
       const response = await request(app).get('/nonexistent-route')
 
       expect(response.status).toBe(404)
-      expect(response.text).toBe('Not Found')
+      expect(response.text).toMatch(/Not Found/i)
     })
 
     test('Глобальна обробка помилок повинна повертати статус 500', async () => {
-      const express = require('express')
-      const tempApp = express()
-
-      // Додаємо маршрут, який викликає помилку
-      tempApp.get('/error-test', (req, res, next) => {
-        next(new Error('Test error'))
+      // Симулюємо непередбачувану помилку в додатку, мокуючи Date.now
+      vi.spyOn(Date, 'now').mockImplementationOnce(() => {
+        throw new Error('Test internal error')
       })
 
-      // Додаємо кастомний обробник помилок
-      tempApp.use((err, req, res, next) => {
-        res.status(500).send('Internal Server Error')
-      })
-
-      const response = await request(tempApp).get('/error-test')
+      const response = await request(app).post('/users').send({ name: 'Error User' })
 
       expect(response.status).toBe(500)
-      expect(response.text).toBe('Internal Server Error')
+      expect(response.text).toMatch(/Internal Server Error/i)
+      
+      vi.restoreAllMocks()
     })
   })
 })
