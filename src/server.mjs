@@ -5,4 +5,5 @@
 // Створюємо EXPRESS сервер
 
 // Експорт для тестів
+let server, app;
 export { server, app };
